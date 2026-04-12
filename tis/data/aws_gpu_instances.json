@@ -1,0 +1,119 @@
+[
+  {
+    "instance_type": "g4dn.xlarge",
+    "gpu": "T4",
+    "gpu_count": 1,
+    "vram_gb": 16,
+    "cpu": 4,
+    "ram_gb": 16,
+    "gpu_flops_tflops": 8.1
+  },
+  {
+    "instance_type": "g5.xlarge",
+    "gpu": "A10G",
+    "gpu_count": 1,
+    "vram_gb": 24,
+    "cpu": 4,
+    "ram_gb": 16,
+    "gpu_flops_tflops": 31.2
+  },
+  {
+    "instance_type": "g5.2xlarge",
+    "gpu": "A10G",
+    "gpu_count": 1,
+    "vram_gb": 24,
+    "cpu": 8,
+    "ram_gb": 32,
+    "gpu_flops_tflops": 31.2
+  },
+  {
+    "instance_type": "g5.12xlarge",
+    "gpu": "A10G",
+    "gpu_count": 4,
+    "vram_gb": 24,
+    "cpu": 48,
+    "ram_gb": 192,
+    "gpu_flops_tflops": 31.2
+  },
+  {
+    "instance_type": "g5.24xlarge",
+    "gpu": "A10G",
+    "gpu_count": 4,
+    "vram_gb": 24,
+    "cpu": 96,
+    "ram_gb": 384,
+    "gpu_flops_tflops": 31.2
+  },
+  {
+    "instance_type": "g6.xlarge",
+    "gpu": "L4",
+    "gpu_count": 1,
+    "vram_gb": 24,
+    "cpu": 4,
+    "ram_gb": 16,
+    "gpu_flops_tflops": 30.3
+  },
+  {
+    "instance_type": "g6.2xlarge",
+    "gpu": "L4",
+    "gpu_count": 1,
+    "vram_gb": 24,
+    "cpu": 8,
+    "ram_gb": 32,
+    "gpu_flops_tflops": 30.3
+  },
+  {
+    "instance_type": "g6.12xlarge",
+    "gpu": "L4",
+    "gpu_count": 4,
+    "vram_gb": 24,
+    "cpu": 48,
+    "ram_gb": 192,
+    "gpu_flops_tflops": 30.3
+  },
+  {
+    "instance_type": "g6e.xlarge",
+    "gpu": "L40S",
+    "gpu_count": 1,
+    "vram_gb": 48,
+    "cpu": 4,
+    "ram_gb": 32,
+    "gpu_flops_tflops": 181.0
+  },
+  {
+    "instance_type": "g6e.12xlarge",
+    "gpu": "L40S",
+    "gpu_count": 4,
+    "vram_gb": 48,
+    "cpu": 48,
+    "ram_gb": 384,
+    "gpu_flops_tflops": 181.0
+  },
+  {
+    "instance_type": "p4d.24xlarge",
+    "gpu": "A100-40GB",
+    "gpu_count": 8,
+    "vram_gb": 40,
+    "cpu": 96,
+    "ram_gb": 1152,
+    "gpu_flops_tflops": 156.0
+  },
+  {
+    "instance_type": "p5.48xlarge",
+    "gpu": "H100-80GB",
+    "gpu_count": 8,
+    "vram_gb": 80,
+    "cpu": 192,
+    "ram_gb": 2048,
+    "gpu_flops_tflops": 500.0
+  },
+  {
+    "instance_type": "p5en.48xlarge",
+    "gpu": "H200 NVL",
+    "gpu_count": 8,
+    "vram_gb": 141,
+    "cpu": 192,
+    "ram_gb": 2048,
+    "gpu_flops_tflops": 835.0
+  }
+]

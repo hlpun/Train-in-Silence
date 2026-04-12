@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "train-in-silence"
+version = "0.1.0"
+description = "LLM fine-tuning hardware planner with CLI and API."
+readme = "README.md"
+authors = [{name = "hlpun", email = "hlpun@foxmail.com"}]
+license = {text = "MIT"}
+keywords = ["llm", "finetuning", "hardware-planner", "mcp"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115.0,<1.0.0",
+  "httpx>=0.27.0,<1.0.0",
+  "mcp>=1.26.0,<2.0.0",
+  "pydantic>=2.7.0,<3.0.0",
+  "pyyaml>=6.0.1,<7.0.0",
+  "typer>=0.12.0,<1.0.0",
+  "uvicorn>=0.30.0,<1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0,<9.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hlpun/Train-in-Silence"
+Repository = "https://github.com/hlpun/Train-in-Silence"
+Documentation = "https://github.com/hlpun/Train-in-Silence/tree/main/docs"
+Issues = "https://github.com/hlpun/Train-in-Silence/issues"
+
+[project.scripts]
+tis = "tis.cli.main:app"
+tis-mcp = "tis.plugins.mcp_server:run_server"
+
+[tool.setuptools]
+packages = ["tis"]
+
+[tool.setuptools.package-data]
+"tis.data" = ["*.json"]

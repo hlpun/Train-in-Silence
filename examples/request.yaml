@@ -1,0 +1,29 @@
+workload:
+  model:
+    name: llama-13b
+    params: 13000000000
+    architecture: decoder-only
+  training:
+    method: qlora
+    precision: bf16
+    batch_size: 4
+    grad_accum: 8
+    seq_len: 2048
+    epochs: 3
+    num_workers: 6
+  data:
+    dataset_tokens: 100000000
+
+constraints:
+  platforms:
+    - vast.ai
+    - runpod
+  max_budget: 20
+  max_time_hours: 12
+  region:
+    - us
+    - eu
+  max_gpus: 4
+
+preference:
+  optimize_for: balanced
