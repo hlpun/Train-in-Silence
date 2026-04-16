@@ -9,7 +9,7 @@ from tis.planner.models import Constraints, MarketOffer, PlanningRequest, Planni
 from tis.planner.recommender import PlannerService
 from tis.planner.workload import load_request
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.2"
 
 
 class RequestEnvelope(BaseModel):

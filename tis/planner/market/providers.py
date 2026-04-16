@@ -11,9 +11,15 @@ from tis.planner.market.catalog import AWSSpecCatalog, GPUSpecCatalog
 from tis.planner.market.http import HTTPRequester, RequestPolicy
 from tis.planner.models import Constraints, MarketOffer, ProviderStatus
 
+try:
+    import gpuhunt
+except ImportError:
+    gpuhunt = None
+
 VAST_OFFERS_URL = "https://console.vast.ai/api/v0/bundles/"
 RUNPOD_GRAPHQL_URL = "https://api.runpod.io/graphql"
 AWS_PRICE_LIST_URL_TEMPLATE = "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/{region}/index.json"
+GPUFINDER_URL = "https://gpufindr.com/gpus"
 
 
 @dataclass
@@ -45,6 +51,8 @@ class SampleMarketProvider:
     def fetch(self, constraints: Constraints) -> ProviderFetchResult:
         payload = self._json.loads(self._data_path.read_text(encoding="utf-8"))
         offers = [MarketOffer.model_validate(item) for item in payload]
+        for offer in offers:
+            offer.source_detail = "sample"
         offers = _apply_constraints(offers, constraints)
         return ProviderFetchResult(
             offers=offers,
@@ -141,9 +149,11 @@ class VastAIProvider:
                         cpu=cpu,
                         ram_gb=round(ram_gb, 2),
                         gpu_flops_tflops=float(item.get("total_flops") or self.catalog.flops_for(gpu_name)),
+                        memory_bw_gbps=self.catalog.bandwidth_for(gpu_name),
                         platform=self.platform,
                         region=_vast_region_label(str(item.get("geolocation") or item.get("country") or "global")),
                         source="live",
+                        source_detail="live:official",
                         spot=False,
                         available_instances=int(item.get("num_gpus") or 1), # Vast lists individual machine offers
                         is_availability_estimated=False,
@@ -281,9 +291,11 @@ class RunpodProvider:
                                 cpu=int(lowest_price.get("minVcpu") or max(4, gpu_count * 8)),
                                 ram_gb=float(lowest_price.get("minMemory") or max(16, gpu_count * memory * 1.5)),
                                 gpu_flops_tflops=self.catalog.flops_for(name),
+                                memory_bw_gbps=self.catalog.bandwidth_for(name),
                                 platform=self.platform,
                                 region=_runpod_region_from_stock(lowest_price.get("stockStatus") or ""),
                                 source="live",
+                                source_detail="live:official",
                                 spot=is_spot,
                                 available_instances=max(1, max_unreserved // gpu_count),
                                 is_availability_estimated=False,
@@ -370,9 +382,11 @@ class AWSProvider:
                             cpu=int(spec["cpu"]),
                             ram_gb=float(spec["ram_gb"]),
                             gpu_flops_tflops=float(spec["gpu_flops_tflops"]),
+                            memory_bw_gbps=float(spec.get("memory_bw_gbps", 0.0)),
                             platform=self.platform,
                             region=region.lower(),
                             source="live",
+                            source_detail="live:official",
                             spot=False,
                             available_instances=10, # Defaulting to 10 for massive clouds when real-time availability is unknown
                             is_availability_estimated=True,
@@ -403,6 +417,209 @@ class AWSProvider:
                     message=f"Live request failed: {exc}",
                 )
             )
+
+
+class GPUFinderProvider:
+    platform = "gpufindr"
+
+    def __init__(
+        self,
+        requester: HTTPRequester | None = None,
+        cache: FileTTLCache | None = None,
+        catalog: GPUSpecCatalog | None = None,
+    ) -> None:
+        self.requester = requester or HTTPRequester(RequestPolicy(timeout_seconds=20.0))
+        self.cache = cache or FileTTLCache(ttl_seconds=300)
+        self.catalog = catalog or GPUSpecCatalog()
+
+    def fetch(self, constraints: Constraints) -> ProviderFetchResult:
+        cache_key = f"gpufinder:{','.join(sorted(constraints.platforms))}:{constraints.max_gpus}"
+        cached = self.cache.get_json(cache_key)
+        if cached is not None:
+            offers = [MarketOffer.model_validate(item) for item in cached]
+            offers = _apply_constraints(offers, constraints)
+            return ProviderFetchResult(
+                offers=offers,
+                status=ProviderStatus(
+                    provider=self.platform,
+                    source="live",
+                    ok=True,
+                    offers_count=len(offers),
+                    message="Loaded live offers from gpufindr cache.",
+                ),
+            )
+
+        try:
+            params = {
+                "limit": 200,
+                "max_price": constraints.max_budget if constraints.max_budget else 100.0,
+            }
+            payload = self.requester.get_json(GPUFINDER_URL, params=params)
+            raw_offers = payload if isinstance(payload, list) else []
+
+            offers: list[MarketOffer] = []
+            for item in raw_offers:
+                source_platform = str(item.get("source") or "unknown").lower()
+                gpu_name = str(item.get("name") or "unknown")
+                resolved_gpu = self.catalog.resolve_name(gpu_name)
+                
+                vram_gb = float(item.get("vram_mb") or 0) / 1024.0
+                ram_gb = float(item.get("ram_mb") or 0) / 1024.0
+                price = float(item.get("total_cost_ph") or 0.0)
+                gpu_count = int(item.get("num_gpus") or 1)
+                
+                if price <= 0 or vram_gb <= 0:
+                    continue
+                
+                offers.append(
+                    MarketOffer(
+                        gpu=resolved_gpu,
+                        gpu_count=gpu_count,
+                        vram_gb=round(vram_gb, 2),
+                        price_per_hour=round(price, 4),
+                        cpu=int(item.get("cpu_cores") or 2),
+                        ram_gb=round(ram_gb, 2),
+                        gpu_flops_tflops=float(item.get("total_flops") or self.catalog.flops_for(gpu_name)),
+                        memory_bw_gbps=self.catalog.bandwidth_for(gpu_name),
+                        platform=source_platform,
+                        region=str(item.get("location") or "unknown").lower(),
+                        source="live",
+                        source_detail="live:gpufindr",
+                        spot=False,
+                        available_instances=1,
+                        instance_type=str(item.get("id") or ""),
+                    )
+                )
+
+            self.cache.set_json(cache_key, [item.model_dump(mode="json") for item in offers])
+            return ProviderFetchResult(
+                offers=offers,
+                status=ProviderStatus(
+                    provider=self.platform,
+                    source="live",
+                    ok=True,
+                    offers_count=len(offers),
+                    message="Fetched live offers from gpufindr.com.",
+                ),
+            )
+        except (httpx.HTTPError, ValueError) as exc:
+            return ProviderFetchResult(
+                status=ProviderStatus(
+                    provider=self.platform,
+                    source="live",
+                    ok=False,
+                    offers_count=0,
+                    message=f"gpufindr request failed: {exc}",
+                )
+            )
+
+
+class GPUHuntProvider:
+    platform = "gpuhunt"
+
+    def __init__(
+        self,
+        cache: FileTTLCache | None = None,
+        catalog: GPUSpecCatalog | None = None,
+    ) -> None:
+        self.cache = cache or FileTTLCache(ttl_seconds=300)
+        self.catalog = catalog or GPUSpecCatalog()
+
+    def fetch(self, constraints: Constraints) -> ProviderFetchResult:
+        if gpuhunt is None:
+            return ProviderFetchResult(
+                status=ProviderStatus(
+                    provider=self.platform,
+                    source="live",
+                    ok=False,
+                    offers_count=0,
+                    message="gpuhunt library is not installed.",
+                )
+            )
+
+        cache_key = f"gpuhunt:{','.join(sorted(constraints.platforms))}:{constraints.max_gpus}"
+        cached = self.cache.get_json(cache_key)
+        if cached is not None:
+            offers = [MarketOffer.model_validate(item) for item in cached]
+            offers = _apply_constraints(offers, constraints)
+            return ProviderFetchResult(
+                offers=offers,
+                status=ProviderStatus(
+                    provider=self.platform,
+                    source="live",
+                    ok=True,
+                    offers_count=len(offers),
+                    message="Loaded live offers from gpuhunt cache.",
+                ),
+            )
+
+        try:
+            # We fetch all and filter locally to ensure consistency with our Constraints
+            raw_results = gpuhunt.query()
+            
+            offers: list[MarketOffer] = []
+            for item in raw_results:
+                # Map gpuhunt provider name to TIS platform name
+                provider_name = str(item.provider).lower()
+                if provider_name == "vastai":
+                    provider_name = "vast.ai"
+                
+                gpu_name = str(item.gpu_name)
+                resolved_gpu = self.catalog.resolve_name(gpu_name)
+                
+                vram_gb = float(item.gpu_memory or 0)
+                ram_gb = float(item.memory or 0)
+                price = float(item.price or 0.0)
+                gpu_count = int(item.gpu_count or 1)
+                
+                if price <= 0 or vram_gb <= 0:
+                    continue
+                
+                offers.append(
+                    MarketOffer(
+                        gpu=resolved_gpu,
+                        gpu_count=gpu_count,
+                        vram_gb=round(vram_gb, 2),
+                        price_per_hour=round(price, 4),
+                        cpu=int(item.cpu or 2),
+                        ram_gb=round(ram_gb, 2),
+                        gpu_flops_tflops=self.catalog.flops_for(gpu_name),
+                        memory_bw_gbps=self.catalog.bandwidth_for(gpu_name),
+                        platform=provider_name,
+                        region=str(item.location or "unknown").lower(),
+                        source="live",
+                        source_detail="live:gpuhunt",
+                        spot=bool(item.spot),
+                        available_instances=1,
+                        instance_type=str(item.instance_name or ""),
+                    )
+                )
+
+            # Apply constraints and dedupe
+            offers = _dedupe_offers(_apply_constraints(offers, constraints))
+            
+            self.cache.set_json(cache_key, [item.model_dump(mode="json") for item in offers])
+            return ProviderFetchResult(
+                offers=offers,
+                status=ProviderStatus(
+                    provider=self.platform,
+                    source="live",
+                    ok=True,
+                    offers_count=len(offers),
+                    message="Fetched live offers using gpuhunt library.",
+                ),
+            )
+        except Exception as exc:
+            return ProviderFetchResult(
+                status=ProviderStatus(
+                    provider=self.platform,
+                    source="live",
+                    ok=False,
+                    offers_count=0,
+                    message=f"gpuhunt query failed: {exc}",
+                )
+            )
+
 
 
 def _apply_constraints(offers: list[MarketOffer], constraints: Constraints) -> list[MarketOffer]:

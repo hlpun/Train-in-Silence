@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">Train in Silence</h1>
-  <p align="center">
+    The first Task-Aware MCP server for LLM fine-tuning.
     Stop comparing GPU prices. Start training.
   </p>
   <p align="center">
@@ -12,13 +12,13 @@
 
 ---
 
-You want to fine-tune an LLM. You open Vast.ai, RunPod, AWS -- three tabs, three pricing models, three different ways to describe a GPU. An hour later you're still in a spreadsheet and haven't written a single line of training code.
+You want to fine-tune an LLM. You open Vast.ai, RunPod, AWS, etc. -- a dozen tabs, a dozen pricing models, a dozen different ways to describe a GPU. Which option can run your code, and do so more cheaply and quickly? An hour later you're still in a spreadsheet and haven't written a single line of training code.
 
-**Train in Silence** does that homework for you. Describe your workload once, and it returns the cheapest, fastest, and most balanced hardware options across cloud providers -- in seconds.
+**Train in Silence** is the first **Task-Aware MCP server** for LLM fine-tuning. It doesn't just list prices; it understands your workload. Describe your training job once, and it calculates the required VRAM/FLOPs to return the cheapest, fastest, and most balanced hardware options across **a dozen cloud providers** -- in seconds.
 
 ## Quickstart
 
-### Option A: Ask Claude (recommended)
+### Option A: Ask Claude Code (recommended)
 
 Install the library and register it as a tool in [Claude Code](https://docs.anthropic.com/en/docs/claude-code):
 
@@ -30,11 +30,11 @@ claude mcp add tis --scope user -- tis-mcp
 Then just ask in natural language:
 
 ```
-> I want to QLoRA fine-tune Llama-13B on 100M tokens, budget under $20.
-  Find me the best GPU options across Vast.ai, RunPod, and AWS.
+> I want to run the fine-tune code in my current directory, and finish it within 20 hours.
+  Find me the best GPU options across Vast.ai, RunPod, and Lambda.
 ```
 
-Claude calls TIS behind the scenes and returns a structured recommendation -- no YAML, no config files, no manual comparison.
+Claude Code calls TIS behind the scenes and returns a structured recommendation -- no YAML, no config files, no manual comparison.
 
 ### Option B: CLI
 
@@ -63,27 +63,26 @@ $ tis recommend examples/request.yaml
 |---------|---------|------|
 | **CLI** | `tis recommend request.yaml` | [CLI Guide](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/cli.md) |
 | **REST API** | `uvicorn tis.api.server:app` | [API Reference](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/api.md) |
-| **Claude Code** | `claude mcp add tis --scope user -- tis-mcp` | [MCP Guide](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/mcp.md) |
+| **Claude Code** | `claude mcp add tis --scope user --tis-mcp` | [MCP Guide](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/mcp.md) |
 | **Claude Desktop** | Add `tis-mcp` to `claude_desktop_config.json` | [MCP Guide](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/mcp.md) |
 
 ### Market Providers
 
-Live pricing from three providers -- no manual data entry:
+TIS aggregates live pricing across a dozen GPU clouds. API keys are **optional**: if not provided, TIS automatically falls back sequentially to universal live aggregators (GPUHunt/GPUFinder) or bundled sample data.
 
-| Provider | Source | Auth Required |
-|----------|--------|---------------|
-| **Vast.ai** | REST API | `VAST_API_KEY` |
-| **RunPod** | GraphQL API | `RUNPOD_API_KEY` |
-| **AWS** | Public EC2 Price List | None |
+| Provider Class | Included Platforms | Auth Required |
+|----------------|--------------------|---------------|
+| **Dedicated** | Vast.ai, RunPod, AWS | **Optional** (Highly Recommended) |
+| **Aggregated** | Vast.ai, RunPod, AWS, CoreWeave, Lambda Labs, Tensordock, Vultr, GCP, Azure, OCI, Nebius, CloudRift, Cudo Compute, Verda | **None** (Auto-fallback) |
 
-If a provider is unreachable, TIS gracefully falls back to bundled sample data and marks the result accordingly. [-> Provider details](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/providers.md)
+Every recommendation clearly identifies its **Source of Truth** (e.g., `live:official`, `live:gpuhunt`, `live:gpufinder`, or `sample`) so you always know how fresh the data is. [-> Provider details](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/providers.md)
 
 ## Architecture at a Glance
 
 ```
 YAML request -> Estimator -> Market Aggregator -> Optimizer -> Pareto Frontier -> Ranked Output
                   |                |                 |
-              VRAM/FLOPs     Vast+RunPod+AWS    Cost vs. Time
+              VRAM/FLOPs     10+ GPU Clouds    Cost vs. Time
 ```
 
 Each recommendation shows **where the data came from** (`live` or `sample`) and flags any estimated fields -- no silent guesswork. [-> Architecture deep-dive](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/architecture.md)
@@ -91,5 +90,11 @@ Each recommendation shows **where the data came from** (`live` or `sample`) and 
 ## Known Limitations
 
 - Estimation model is fixed with no built-in calibration; future versions will calibrate using real runtimes.
-- AWS availability uses an approximation method due to the lack of a real-time instance list API (flagged transparently).
 - Upstream Provider API schema changes will require synchronized mapping updates.
+
+## 🚧 Project Status & Contribution
+
+This project is currently in the **experimental development stage (Experimental)**.
+
+- **Issues & Suggestions**: If you encounter any bugs, inaccurate estimations, or have suggestions for improvement, please feel free to submit a [GitHub Issue](https://github.com/hlpun/Train-in-Silence/issues).
+- **Contribute**: If you'd like to improve the code or supplement hardware metadata, Pull Requests are highly welcome! We look forward to refining this LLM hardware planner with the community.

@@ -1,0 +1,103 @@
+interactions:
+- request:
+    body: '{"query":"\n        query GpuTypes {\n          gpuTypes {\n            id\n            displayName\n            memoryInGb\n            securePrice\n            communityPrice\n            secureSpotPrice\n            lowestPrice(input:
+      {\n              gpuCount: 1,\n              minDisk: 0,\n              minMemoryInGb:
+      8,\n              minVcpuCount: 2,\n              secureCloud: true\n            })
+      {\n              uninterruptablePrice\n              minimumBidPrice\n              minVcpu\n              minMemory\n              stockStatus\n              maxUnreservedGpuCount\n              availableGpuCounts\n            }\n          }\n        }\n        "}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '674'
+      Host:
+      - api.runpod.io
+      User-Agent:
+      - python-httpx/0.28.1
+      content-type:
+      - application/json
+    method: POST
+    uri: https://api.runpod.io/graphql?api_key=MASKED
+  response:
+    body:
+      string: '{"data":{"gpuTypes":[{"id":"AMD Instinct MI300X OAM","displayName":"MI300X","memoryInGb":192,"securePrice":1.99,"communityPrice":0.5,"secureSpotPrice":1.49,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        A100 80GB PCIe","displayName":"A100 PCIe","memoryInGb":80,"securePrice":1.39,"communityPrice":1.19,"secureSpotPrice":0.82,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        A100-SXM4-40GB","displayName":"A100 SXM 40GB","memoryInGb":40,"securePrice":0,"communityPrice":1,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        A100-SXM4-80GB","displayName":"A100 SXM","memoryInGb":80,"securePrice":1.49,"communityPrice":1.39,"secureSpotPrice":0.95,"lowestPrice":{"uninterruptablePrice":1.49,"minimumBidPrice":0.95,"minVcpu":16,"minMemory":117,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        A40","displayName":"A40","memoryInGb":48,"securePrice":0.44,"communityPrice":0.35,"secureSpotPrice":0.2,"lowestPrice":{"uninterruptablePrice":0.44,"minimumBidPrice":0.2,"minVcpu":9,"minMemory":50,"stockStatus":"Medium","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        B200","displayName":"B200","memoryInGb":180,"securePrice":5.49,"communityPrice":5.98,"secureSpotPrice":3.59,"lowestPrice":{"uninterruptablePrice":5.49,"minimumBidPrice":3.59,"minVcpu":24,"minMemory":251,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        B300 SXM6 AC","displayName":"B300","memoryInGb":288,"securePrice":7.39,"communityPrice":6.94,"secureSpotPrice":7.39,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 3070","displayName":"RTX 3070","memoryInGb":8,"securePrice":0,"communityPrice":0.13,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 3080","displayName":"RTX 3080","memoryInGb":10,"securePrice":0,"communityPrice":0.17,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 3080 Ti","displayName":"RTX 3080 Ti","memoryInGb":12,"securePrice":0,"communityPrice":0.18,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 3090","displayName":"RTX 3090","memoryInGb":24,"securePrice":0.46,"communityPrice":0.22,"secureSpotPrice":0.22,"lowestPrice":{"uninterruptablePrice":0.46,"minimumBidPrice":0.22,"minVcpu":32,"minMemory":117,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 3090 Ti","displayName":"RTX 3090 Ti","memoryInGb":24,"securePrice":0.46,"communityPrice":0.27,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 4070 Ti","displayName":"RTX 4070 Ti","memoryInGb":12,"securePrice":0.5,"communityPrice":0.19,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 4080","displayName":"RTX 4080","memoryInGb":16,"securePrice":0.5,"communityPrice":0.27,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 4080 SUPER","displayName":"RTX 4080 SUPER","memoryInGb":16,"securePrice":0.5,"communityPrice":0.28,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 4090","displayName":"RTX 4090","memoryInGb":24,"securePrice":0.59,"communityPrice":0.34,"secureSpotPrice":0.29,"lowestPrice":{"uninterruptablePrice":0.59,"minimumBidPrice":0.29,"minVcpu":9,"minMemory":41,"stockStatus":"High","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 5080","displayName":"RTX 5080","memoryInGb":16,"securePrice":0.59,"communityPrice":0.39,"secureSpotPrice":0.3,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        GeForce RTX 5090","displayName":"RTX 5090","memoryInGb":32,"securePrice":0.99,"communityPrice":0.69,"secureSpotPrice":0.53,"lowestPrice":{"uninterruptablePrice":0.99,"minimumBidPrice":0.53,"minVcpu":15,"minMemory":31,"stockStatus":"High","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        H100 80GB HBM3","displayName":"H100 SXM","memoryInGb":80,"securePrice":2.99,"communityPrice":2.69,"secureSpotPrice":1.75,"lowestPrice":{"uninterruptablePrice":2.99,"minimumBidPrice":1.75,"minVcpu":8,"minMemory":125,"stockStatus":"High","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        H100 NVL","displayName":"H100 NVL","memoryInGb":94,"securePrice":3.07,"communityPrice":2.59,"secureSpotPrice":1.65,"lowestPrice":{"uninterruptablePrice":3.07,"minimumBidPrice":1.65,"minVcpu":16,"minMemory":94,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        H100 PCIe","displayName":"H100 PCIe","memoryInGb":80,"securePrice":2.39,"communityPrice":1.99,"secureSpotPrice":1.25,"lowestPrice":{"uninterruptablePrice":2.39,"minimumBidPrice":1.25,"minVcpu":16,"minMemory":251,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        H200","displayName":"H200 SXM","memoryInGb":141,"securePrice":3.59,"communityPrice":3.59,"secureSpotPrice":2.29,"lowestPrice":{"uninterruptablePrice":3.59,"minimumBidPrice":2.29,"minVcpu":12,"minMemory":188,"stockStatus":"Medium","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        H200 NVL","displayName":"NVIDIA H200 NVL","memoryInGb":143,"securePrice":3.39,"communityPrice":0.5,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":3.39,"minimumBidPrice":null,"minVcpu":16,"minMemory":283,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        L4","displayName":"L4","memoryInGb":24,"securePrice":0.39,"communityPrice":0.44,"secureSpotPrice":0.22,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        L40","displayName":"L40","memoryInGb":48,"securePrice":0.99,"communityPrice":0.69,"secureSpotPrice":0.5,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        L40S","displayName":"L40S","memoryInGb":48,"securePrice":0.86,"communityPrice":0.79,"secureSpotPrice":0.26,"lowestPrice":{"uninterruptablePrice":0.86,"minimumBidPrice":0.26,"minVcpu":16,"minMemory":94,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX 2000 Ada Generation","displayName":"RTX 2000 Ada","memoryInGb":16,"securePrice":0.24,"communityPrice":0.5,"secureSpotPrice":0.14,"lowestPrice":{"uninterruptablePrice":0.24,"minimumBidPrice":0.14,"minVcpu":8,"minMemory":31,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX 4000 Ada Generation","displayName":"RTX 4000 Ada","memoryInGb":20,"securePrice":0.26,"communityPrice":0.2,"secureSpotPrice":0.19,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX 4000 SFF Ada Generation","displayName":"RTX 4000 Ada SFF","memoryInGb":20,"securePrice":0.44,"communityPrice":0.18,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX 5000 Ada Generation","displayName":"RTX 5000 Ada","memoryInGb":32,"securePrice":0.83,"communityPrice":0.49,"secureSpotPrice":0.42,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX 6000 Ada Generation","displayName":"RTX 6000 Ada","memoryInGb":48,"securePrice":0.77,"communityPrice":0.74,"secureSpotPrice":0.39,"lowestPrice":{"uninterruptablePrice":0.77,"minimumBidPrice":0.39,"minVcpu":16,"minMemory":62,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX A2000","displayName":"RTX A2000","memoryInGb":6,"securePrice":0.5,"communityPrice":0.12,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX A4000","displayName":"RTX A4000","memoryInGb":16,"securePrice":0.25,"communityPrice":0.17,"secureSpotPrice":0.16,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX A4500","displayName":"RTX A4500","memoryInGb":20,"securePrice":0.25,"communityPrice":0.19,"secureSpotPrice":0.18,"lowestPrice":{"uninterruptablePrice":0.25,"minimumBidPrice":0.18,"minVcpu":12,"minMemory":62,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX A5000","displayName":"RTX A5000","memoryInGb":24,"securePrice":0.27,"communityPrice":0.16,"secureSpotPrice":0.14,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX A6000","displayName":"RTX A6000","memoryInGb":48,"securePrice":0.49,"communityPrice":0.33,"secureSpotPrice":0.33,"lowestPrice":{"uninterruptablePrice":0.49,"minimumBidPrice":0.33,"minVcpu":9,"minMemory":50,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX PRO 4500 Blackwell","displayName":"RTX PRO 4500","memoryInGb":32,"securePrice":0.64,"communityPrice":0.34,"secureSpotPrice":0.27,"lowestPrice":{"uninterruptablePrice":0.64,"minimumBidPrice":0.27,"minVcpu":28,"minMemory":62,"stockStatus":"Medium","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX PRO 6000 Blackwell Max-Q Workstation Edition","displayName":"RTX PRO 6000
+        MaxQ","memoryInGb":96,"securePrice":0.5,"communityPrice":1.64,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX PRO 6000 Blackwell Server Edition","displayName":"RTX PRO 6000","memoryInGb":96,"securePrice":1.89,"communityPrice":1.69,"secureSpotPrice":1.19,"lowestPrice":{"uninterruptablePrice":1.89,"minimumBidPrice":1.19,"minVcpu":16,"minMemory":180,"stockStatus":"High","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"NVIDIA
+        RTX PRO 6000 Blackwell Workstation Edition","displayName":"RTX PRO 6000 WK","memoryInGb":96,"securePrice":1.89,"communityPrice":1.69,"secureSpotPrice":1.18,"lowestPrice":{"uninterruptablePrice":1.89,"minimumBidPrice":1.18,"minVcpu":16,"minMemory":282,"stockStatus":"Low","maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"Tesla
+        V100-PCIE-16GB","displayName":"Tesla V100","memoryInGb":16,"securePrice":0,"communityPrice":0.19,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"Tesla
+        V100-SXM2-16GB","displayName":"V100 SXM2","memoryInGb":16,"securePrice":0,"communityPrice":0.23,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}},{"id":"unknown","displayName":"unknown","memoryInGb":0,"securePrice":0,"communityPrice":0,"secureSpotPrice":null,"lowestPrice":{"uninterruptablePrice":null,"minimumBidPrice":null,"minVcpu":null,"minMemory":null,"stockStatus":null,"maxUnreservedGpuCount":null,"availableGpuCounts":null}}]}}
+
+        '
+    headers:
+      CF-RAY:
+      - 9ed2fffc695efd83-SIN
+      Cache-Control:
+      - no-store
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=utf-8
+      Date:
+      - Thu, 16 Apr 2026 11:55:15 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      apigw-requestid:
+      - b6UlliNfIAMEJaQ=
+      cf-cache-status:
+      - DYNAMIC
+      content-length:
+      - '13344'
+      content-security-policy:
+      - frame-ancestors 'self'
+      etag:
+      - W/"3420-8Y/nu81zDjHLpnKHJ+jbcFMWCIw"
+      x-frame-options:
+      - SAMEORIGIN
+      x-powered-by:
+      - Express
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -19,9 +19,12 @@ class PlannerService:
         self.optimizer = optimizer or OptimizerEngine()
 
     def run(self, request: PlanningRequest) -> PlanningRun:
-        estimate = self.estimator.estimate(request.workload)
+        # Normalize workload into a potential list for the pipeline
+        workload = request.pipeline if request.pipeline else request.workload
+        
+        estimate = self.estimator.estimate(workload)
         market = self.market.fetch_market_data(request.constraints)
-        candidates = self.optimizer.generate_candidates(estimate, market.offers, request.constraints)
+        candidates = self.optimizer.generate_candidates(estimate, market.offers, request.constraints, workload)
         frontier = pareto_frontier(candidates)
         ranked = self._rank(frontier or candidates, request.preference.optimize_for)[:5]
         labeled = self._label_recommendations(ranked)

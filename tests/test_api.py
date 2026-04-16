@@ -19,7 +19,7 @@ def test_health_returns_status() -> None:
 def test_version_returns_valid_json() -> None:
     response = client.get("/version")
     assert response.status_code == 200
-    assert response.json()["version"] == "0.1.0"
+    assert response.json()["version"] == "0.1.2"
 
 
 @patch("tis.api.server.service.market.fetch_market_data")
@@ -45,7 +45,10 @@ def test_recommend_success(mock_fetch) -> None:
     )
     payload = {
         "workload": {
-            "model": {"name": "llama-7b", "params": 7000000000},
+            "model": {
+                "name": "llama-7b", "params": 7000000000,
+                "hidden_dim": 4096, "num_layers": 32, "num_heads": 32, "num_kv_heads": 32
+            },
             "training": {"method": "qlora", "precision": "bf16"},
             "data": {"dataset_tokens": 1000000}
         }

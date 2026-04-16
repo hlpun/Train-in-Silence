@@ -38,6 +38,12 @@ class GPUSpecCatalog:
             return default
         return float(spec["vram_gb"])
 
+    def bandwidth_for(self, raw_name: str, default: float = 0.0) -> float:
+        spec = self.get(raw_name)
+        if spec is None:
+            return default
+        return float(spec.get("memory_bw_gbps", default))
+
     def export(self) -> list[dict[str, object]]:
         return list(self._specs.values())
 

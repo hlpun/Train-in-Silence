@@ -6,7 +6,9 @@ from pathlib import Path
 
 from tis.planner.market.cache import FileTTLCache
 from tis.planner.market import AWSProvider, MarketDataAggregator, RunpodProvider, SampleMarketProvider, VastAIProvider
+from tis.planner.market.base import ProviderFetchResult
 from tis.planner.models import Constraints
+from unittest.mock import MagicMock
 
 
 class VastRequester:
@@ -162,6 +164,8 @@ def test_aws_provider_maps_public_price_list() -> None:
 def test_market_aggregator_falls_back_to_sample_and_reports_failure() -> None:
     aggregator = MarketDataAggregator(
         providers=[FailingLiveProvider()],
+        gpuhunt_provider=MagicMock(fetch=MagicMock(return_value=ProviderFetchResult(offers=[], status=None))),
+        universal_provider=MagicMock(fetch=MagicMock(return_value=ProviderFetchResult(offers=[], status=None))),
         fallback_provider=SampleMarketProvider(),
         allow_sample_fallback=True,
     )

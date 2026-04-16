@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from tis.planner.models import Constraints, PlanningRequest, PlanningResponse, ProviderStatus
 from tis.planner.recommender import PlannerService
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.2"
 
 
 class APIError(BaseModel):
@@ -45,10 +45,17 @@ service = PlannerService()
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    # Sanitize errors to ensure they are JSON serializable (Pydantic V2 can include raw exceptions in ctx)
+    errors = []
+    for error in exc.errors():
+        if "ctx" in error:
+            error["ctx"] = {k: str(v) for k, v in error["ctx"].items()}
+        errors.append(error)
+
     return JSONResponse(
         status_code=422,
         content=APIErrorResponse(
-            error=APIError(code="validation_error", message="Request validation failed.", details=exc.errors())
+            error=APIError(code="validation_error", message="Request validation failed.", details=errors)
         ).model_dump(mode="json"),
     )
 
@@ -95,7 +102,15 @@ def recommend(
                 "summary": "QLoRA on llama-13b",
                 "value": {
                     "workload": {
-                        "model": {"name": "llama-13b", "params": 13000000000, "architecture": "decoder-only"},
+                        "model": {
+                            "name": "llama-13b", 
+                            "params": 13000000000, 
+                            "architecture": "decoder-only",
+                            "hidden_dim": 5120,
+                            "num_layers": 40,
+                            "num_heads": 40,
+                            "num_kv_heads": 40
+                        },
                         "training": {
                             "method": "qlora",
                             "precision": "bf16",

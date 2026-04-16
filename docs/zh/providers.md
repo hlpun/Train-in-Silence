@@ -1,39 +1,56 @@
 # 市场供应商
 
-`Train in Silence` 致力于提供可信的市场数据。数据获取方式和准确度因平台而异，我们在系统设计中通过“数据透明度（Data Transparency）”标志来解决这一问题。
+`Train in Silence` 通过多层数据聚合解决了 GPU 市场碎片化的问题。我们提供一套 **5 层级数据层级策略**，以确保数据的准确性、实时性和“即开即用”的体验。
+
+## 数据层级策略
+
+TIS 按以下优先级顺序获取市场数据：
+
+1.  **Level 1: 直连厂商 (官方 API)**: 
+    - 适用场景：为您最常用的平台提供最高的准确性和实时库存。
+    - 平台：**Vast.ai, RunPod, AWS**。
+    - 鉴权：需要 API Key。
+2.  **Level 2: 实时聚合器 (GPUHunt)**: 
+    - 适用场景：为去中心化或高动态市场提供最新的可用性和价格。
+    - 平台：**TensorDock, Lambda Labs, Paperspace, CoreWeave 等**。
+    - 鉴权：**无**（无需 Key）。
+3.  **Level 3: 通用兜底 (GPUFinder)**: 
+    - 适用场景：覆盖 10 多家较冷门的供应商。
+    - 平台：**GCP, Azure, CloudRift, Cudo Compute, Verda, Nebius, OCI 等**。
+    - 鉴权：**无**（无需 Key）。
+4.  **Level 4: 智能补全 (Supplementation)**: 
+    - TIS 会自动“修补”缺失的元数据（例如，如果某个厂商 API 返回了价格但缺失 CPU/RAM 详情），通过跨层级比对自动填补。
+5.  **Level 5: 样品数据兜底**: 
+    - 仅作为最后的安全网，当所有网络连接都失败时使用。
 
 ## 支持平台
 
-### 1. Vast.ai
-- **数据源**: 实时 API。
-- **解析方式**: 每个结果代表一个具体的机器实例。
-- **确信度**: 高。库存数据为实时更新。
+TIS 目前已覆盖几乎所有主流 GPU 云：
 
-### 2. RunPod
-- **数据源**: 实时 GraphQL。
-- **解析方式**: 基于总可用 GPU 数量（maxUnreservedGpuCount）和节点配置进行聚合。
-- **确信度**: 中高。地区数据通常根据库存状态（stockStatus）推断，并标记为 `is_region_estimated=true`。
-
-- **确信度**: 中。AWS 目前的可用性数据基于目录（默认赋予乐观分值），而其地理位置和价格数据直接来自公开 API，较为准确。标记为 `is_availability_estimated=true`。
-- **注意**：您可以在请求配置中使用简写的区域别名，例如 `us`（扩展为 us-east-1, us-west-2）、`eu`（eu-west-1, eu-central-1）或 `ap`（ap-northeast-1, ap-southeast-1）。
-
-### 4. 样例数据 (内置)
-- **数据源**: 本地 `tis/data/gpu_offers.json`。
-- **说明**: 目前 `tis` 会聚合所捕获到的所有价格（包括竞价/社区实例和按需实例）。虽然数据中保留了 `spot` 标记，但目前的 MVP 版本中尚未提供锁定筛选特定实例类型的开关。
-- **解析方式**: 仅在 `TIS_ALLOW_SAMPLE_FALLBACK=true` 且在线市场连接失败时启用。
+| 类别 | 包含平台 | 鉴权要求 |
+|----------|-----------|------|
+| **核心直连** | Vast.ai, RunPod, AWS | **可选** (推荐配置以获得更高精度) |
+| **算力市场** | TensorDock, Cudo Compute, Verda | **无 (Keyless)** |
+| **精品云** | Lambda Labs, CoreWeave, Paperspace, CloudRift | **无 (Keyless)** |
+| **头部厂商** | GCP, Azure, OCI | **无 (Keyless)** |
+| **专业算力** | Nebius | **无 (Keyless)** |
 
 ## 数据透明度
 
-在推荐结果中，您可能会看到 `notes` 字段。这确保了您了解数据源的性质：
+每条推荐都会通过 `source_detail` 标记明确其**真值来源 (Source of Truth)**：
+- `live:official`: 直接来自厂商 API 的数据。
+- `live:gpuhunt`: 来自高保真聚合器的实时数据。
+- `live:gpufinder`: 来自广度聚合器的通用数据。
+- `live:official+supplemented`: 结合了官方报价与聚合器元数据的合并数据。
+- `sample`: 来自本地离线包的陈旧数据。
 
-- **可用性为估算值...**: 表示平台不支持实时库存查询。我们根据历史实例属性提供了一个乐观的默认分值。
-- **地区为推断值...**: 表示平台未指明明确的物理位置。我们根据库存状态推断了可能的地区。
+## 配置方式
 
-## 如何配置 API Key
-
-在运行前设置以下环境变量。未配置的服务商将被标记为 `ok=False` 并被跳过：
+API Key 现在是**可选的**。如果您希望在特定平台上获得更高精度，请设置以下环境变量：
 
 ```powershell
 $env:VAST_API_KEY="您的 Vast Key"
 $env:RUNPOD_API_KEY="您的 RunPod Key"
 ```
+
+如果未提供，TIS 将自动尝试通过 `gpuhunt` 或 `gpufindr` 层级寻找相同的报价。

@@ -6,7 +6,14 @@ def test_recommend_returns_results() -> None:
     request = PlanningRequest.model_validate(
         {
             "workload": {
-                "model": {"name": "llama-13b", "params": 13_000_000_000},
+                "model": {
+                    "name": "llama-13b", 
+                    "params": 13_000_000_000,
+                    "hidden_dim": 5120,
+                    "num_layers": 40,
+                    "num_heads": 40,
+                    "num_kv_heads": 40
+                },
                 "training": {
                     "method": "qlora",
                     "precision": "bf16",

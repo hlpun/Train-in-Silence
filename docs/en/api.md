@@ -14,15 +14,37 @@ By default, it runs at `http://127.0.0.1:8000`.
 
 ### 1. Get Hardware Recommendations (`POST /recommend`)
 
-Receives a full Planning Request structure and returns filtered and ranked hardware configurations.
+Receives hardware requirements and return ranked configurations. Supports both single-workload and multi-stage pipeline requests.
+
+**Request Schema (High Fidelity):**
+To ensure accurate estimation, `ModelSpec` requires the following architecture parameters:
+- `hidden_dim`: Hidden dimension size.
+- `num_layers`: Number of transformer layers.
+- `num_heads`: Number of query attention heads.
+- `num_kv_heads`: Number of KV attention heads (critical for GQA/MQA models).
 
 **Request Format:**
-See [Workload Definition](./index.md) or the JSON version of `examples/request.yaml`.
+
+```json
+{
+  "workload": {
+    "model": {
+      "name": "llama-3-8b", "params": 8030000000, 
+      "hidden_dim": 4096, "num_layers": 32, 
+      "num_heads": 32, "num_kv_heads": 8
+    },
+    ...
+  }
+}
+```
+
+**Pipeline Requests:**
+Instead of a single `workload`, you can provide a `pipeline` (a list of workloads) to optimize for multi-stage fine-tuning or inference workflows.
 
 **Response Example:**
 ```json
 {
-  "version": "0.1.0",
+  "version": "0.1.2",
   "summary": "Found 5 viable configurations...",
   "provider_statuses": [...],
   "recommendations": [
@@ -38,6 +60,7 @@ See [Workload Definition](./index.md) or the JSON version of `examples/request.y
         "score": 0.8,
         "risk": "low"
       },
+      "source_detail": "live:official+supplemented",
       "notes": ["Availability is estimated based on historical catalog data."],
       "explanation": "..."
     }

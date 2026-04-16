@@ -14,15 +14,37 @@ uvicorn tis.api.server:app --reload
 
 ### 1. 获取硬件推荐 (`POST /recommend`)
 
-接收完整的规划请求结构，并返回经过筛选和排序的硬件配置。
+接收硬件需求并返回排序后的推荐配置。支持单任务 (Workload) 或多阶段流水线 (Pipeline) 请求。
 
-**请求格式：**
-参见 [工作负载定义](./index.md) 或 `examples/request.yaml` 的 JSON 版本。
+**请求 Schema (高保真要求):**
+为确保估算结果的精确性，`ModelSpec` 要求必须提供以下架构参数：
+- `hidden_dim`: 隐藏层维度大小。
+- `num_layers`: Transformer 层数。
+- `num_heads`: Query 注意力头数。
+- `num_kv_heads`: KV 注意力头数 (对于 GQA/MQA 模型至关重要)。
+
+**请求示例:**
+
+```json
+{
+  "workload": {
+    "model": {
+      "name": "llama-3-8b", "params": 8030000000, 
+      "hidden_dim": 4096, "num_layers": 32, 
+      "num_heads": 32, "num_kv_heads": 8
+    },
+    ...
+  }
+}
+```
+
+**流水线 (Pipeline) 请求:**
+除了单一的 `workload`，您还可以提供 `pipeline`（任务列表），用于对涉及多阶段微调或复杂推理工作流的任务进行整体优化。
 
 **响应示例：**
 ```json
 {
-  "version": "0.1.0",
+  "version": "0.1.2",
   "summary": "Found 5 viable configurations...",
   "provider_statuses": [...],
   "recommendations": [
@@ -38,7 +60,8 @@ uvicorn tis.api.server:app --reload
         "score": 0.8,
         "risk": "low"
       },
-      "notes": ["可用性数据基于历史目录估算。"],
+      "source_detail": "live:official+supplemented",
+      "notes": ["可用性数据基于历史目录估算。"]
     }
   ]
 }

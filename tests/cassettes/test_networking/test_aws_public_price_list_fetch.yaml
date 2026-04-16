@@ -1,0 +1,22 @@
+interactions:
+- request:
+    body: ''
+    headers: {}
+    method: GET
+    uri: https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.json
+  response:
+    body:
+      string: '{"formatVersion": "v1.0", "offerCode": "AmazonEC2", "products": {"3RT6W3PX4VZ6G6Z3":
+        {"sku": "3RT6W3PX4VZ6G6Z3", "productFamily": "Compute Instance", "attributes":
+        {"instanceType": "g4dn.xlarge", "location": "US East (N. Virginia)", "operatingSystem":
+        "Linux", "preInstalledSw": "NA", "tenancy": "Shared", "capacitystatus": "Used",
+        "marketoption": "OnDemand"}}}, "terms": {"OnDemand": {"3RT6W3PX4VZ6G6Z3":
+        {"3RT6W3PX4VZ6G6Z3.JRTCKXETXF": {"priceDimensions": {"3RT6W3PX4VZ6G6Z3.JRTCKXETXF.6YS6EN2CT7":
+        {"unit": "Hrs", "pricePerUnit": {"USD": "0.526"}}}}}}}}'
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+version: 1

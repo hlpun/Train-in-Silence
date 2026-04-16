@@ -53,8 +53,8 @@ CLI 的行为受以下环境变量的影响：
 | 变量 | 描述 | 默认值 |
 | :--- | :--- | :--- |
 | `TIS_ALLOW_SAMPLE_FALLBACK` | 是否允许在在线市场不可用时回退到样例数据。 | `true` |
-| `VAST_API_KEY` | 您的 Vast.ai API Key。 | - |
-| `RUNPOD_API_KEY` | 您的 RunPod API Key。 | - |
+| `VAST_API_KEY` | 您的 Vast.ai API Key (可选)。 | - |
+| `RUNPOD_API_KEY` | 您的 RunPod API Key (可选)。 | - |
 
 ## 缓存机制
 

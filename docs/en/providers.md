@@ -1,39 +1,56 @@
 # Market Providers
 
-`Train in Silence` is dedicated to providing trustworthy market data. Data acquisition methods and accuracy vary by platform, which we address through "Data Transparency" flags in the system design.
+`Train in Silence` solves the fragmented GPU market problem by aggregating data across multiple layers. We provide a **5-layer hierarchical data strategy** to ensure accuracy, real-time performance, and a "ready-to-use" experience.
+
+## Hierarchical Data Strategy
+
+TIS fetches market data in the following order of priority:
+
+1.  **Level 1: Dedicated Providers (Official APIs)**: 
+    - Best for: Highest accuracy and real-time inventory for platforms you use most.
+    - Platforms: **Vast.ai, RunPod, AWS**.
+    - Auth: Requires API Keys.
+2.  **Level 2: Real-time Aggregator (GPUHunt)**: 
+    - Best for: Fresh availability and pricing for decentralized or high-dynamism markets.
+    - Platforms: **TensorDock, Lambda Labs, Paperspace, CoreWeave, etc.**
+    - Auth: **None**.
+3.  **Level 3: Universal Fallback (GPUFinder)**: 
+    - Best for: Broad coverage across 10+ less common providers.
+    - Platforms: **GCP, Azure, CloudRift, Cudo Compute, Verda, Nebius, OCI, etc.**
+    - Auth: **None**.
+4.  **Level 4: Smart Supplementation**: 
+    - TIS automatically "patches" missing metadata (e.g., if a provider API returns price but misses CPU/RAM details) by cross-referencing between layers.
+5.  **Level 5: Sample Fallback**: 
+    - Used only as a final safety net when all network connections fail.
 
 ## Supported Platforms
 
-### 1. Vast.ai
-- **Data Source**: Real-time API.
-- **Parsing**: Each result represents a specific machine instance.
-- **Certainty**: High. Inventory data is real-time.
+TIS now covers nearly every major GPU cloud:
 
-### 2. RunPod
-- **Data Source**: Real-time GraphQL.
-- **Parsing**: Aggregated based on total available GPUs (maxUnreservedGpuCount) and node configurations.
-- **Certainty**: Medium-High. Region data is often inferred based on stock status (stockStatus), flagged as `is_region_estimated=true`.
-
-- **Certainty**: Medium. Current availability for AWS is catalog-based (optimistic default score), while regions and pricing are accurate from the public API. Flagged as `is_availability_estimated=true`.
-- **Note**: You can use shorthand region aliases such as `us` (expands to us-east-1, us-west-2), `eu` (eu-west-1, eu-central-1), or `ap` (ap-northeast-1, ap-southeast-1) in your request configuration.
-
-### 4. Sample (Built-in)
-- **Data Source**: Local `tis/data/gpu_offers.json`.
-- **Note**: Currently, `tis` aggregates both On-Demand and Spot/Community prices where available. While the `spot` flag is preserved in the data, there is no constraint to filter strictly for one or the other in the current MVP.
-- **Parsing**: Enabled only when `TIS_ALLOW_SAMPLE_FALLBACK=true` and online markets are unreachable.
+| Category | Platforms | Auth |
+|----------|-----------|------|
+| **Core** | Vast.ai, RunPod, AWS | **Optional** (Rec: Required for precision) |
+| **Marketplaces** | TensorDock, Cudo Compute, Verda | **Keyless** |
+| **Boutique Clouds** | Lambda Labs, CoreWeave, Paperspace, CloudRift | **Keyless** |
+| **Hyperscalers** | GCP, Azure, OCI | **Keyless** |
+| **Specialized** | Nebius | **Keyless** |
 
 ## Data Transparency
 
-In recommendation responses, you may see a `notes` field. This ensures you understand the nature of the data sources:
+Every recommendation clearly identifies its **Source of Truth** via the `source_detail` tag:
+- `live:official`: Direct data from the vendor API.
+- `live:gpuhunt`: Real-time data from the high-fidelity aggregator.
+- `live:gpufinder`: Universal data from the broad aggregator.
+- `live:official+supplemented`: Merged data combining official pricing with aggregator metadata.
+- `sample`: Stale data from the local bundle.
 
-- **Availability is estimated...**: Indicates the platform doesn't support real-time inventory queries. We provide an optimistic default score based on historical instance attributes.
-- **Region is inferred...**: Indicates the platform didn't specify a clear physical location. We inferred the likely region based on stock status.
+## Configuration
 
-## How to Configure API Keys
-
-Set the following environment variables before running. Unconfigured providers will be marked `ok=False` and skipped:
+API Keys are **optional**. If you want higher precision for specific platforms, set the following environment variables:
 
 ```powershell
 $env:VAST_API_KEY="your_vast_key"
 $env:RUNPOD_API_KEY="your_runpod_key"
 ```
+
+If not provided, TIS will automatically attempt to find the same offers through the `gpuhunt` or `gpufindr` layers.

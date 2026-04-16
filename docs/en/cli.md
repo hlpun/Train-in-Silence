@@ -53,8 +53,8 @@ CLI behavior is influenced by the following environment variables:
 | Variable | Description | Default |
 | :--- | :--- | :--- |
 | `TIS_ALLOW_SAMPLE_FALLBACK` | Whether to allow falling back to sample data when online markets fail. | `true` |
-| `VAST_API_KEY` | Your Vast.ai API Key. | - |
-| `RUNPOD_API_KEY` | Your RunPod API Key. | - |
+| `VAST_API_KEY` | Your Vast.ai API Key (Optional). | - |
+| `RUNPOD_API_KEY` | Your RunPod API Key (Optional). | - |
 
 ## Caching Mechanism
 

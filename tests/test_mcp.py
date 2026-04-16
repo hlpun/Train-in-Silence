@@ -44,7 +44,15 @@ def test_mcp_recommend_hardware_supports_inline_request() -> None:
             "payload": {
                 "request": {
                     "workload": {
-                        "model": {"name": "llama-13b", "params": 13000000000, "architecture": "decoder-only"},
+                        "model": {
+                            "name": "llama-13b", 
+                            "params": 13000000000, 
+                            "architecture": "decoder-only",
+                            "hidden_dim": 5120,
+                            "num_layers": 40,
+                            "num_heads": 40,
+                            "num_kv_heads": 40
+                        },
                         "training": {
                             "method": "qlora",
                             "precision": "bf16",
