@@ -48,10 +48,10 @@ def test_optimizer_transparency_notes_and_optimistic_risk(optimizer: OptimizerEn
     recs = optimizer.generate_candidates(basic_estimate, offers, Constraints())
     assert len(recs) == 1
     rec = recs[0]
-    
+
     # Transparency Notes
     assert any("Availability is estimated" in note for note in rec.notes)
-    
+
     # Optimistic Risk Logic (should be LOW risk even if available_instances is missing/low)
     assert rec.availability.risk == RiskLevel.LOW
     assert rec.availability.score == 0.8
@@ -94,7 +94,7 @@ def test_optimizer_distributed_tax(optimizer: OptimizerEngine) -> None:
 
 
 def test_optimizer_inference_tps_logic(optimizer: OptimizerEngine, llama3_model) -> None:
-    # 8B model, FP16 -> 16GB. 
+    # 8B model, FP16 -> 16GB.
     # Bandwidth bound test.
     workload = Workload(
         model=llama3_model,
@@ -104,7 +104,7 @@ def test_optimizer_inference_tps_logic(optimizer: OptimizerEngine, llama3_model)
         required_vram_gb=18.0, required_cpu_cores=2, required_ram_gb=32.0,
         total_flops=0, throughput_tokens_per_second=0
     )
-    
+
     # Offer 1: Slow bandwidth (RTX 4090 ~1TB/s)
     # Offer 2: Fast bandwidth (H100 ~3.3TB/s)
     o1 = MarketOffer(
@@ -117,11 +117,11 @@ def test_optimizer_inference_tps_logic(optimizer: OptimizerEngine, llama3_model)
         cpu=16, ram_gb=64.0, gpu_flops_tflops=989.0, memory_bw_gbps=3350.0,
         platform="p1", region="r1", source="live"
     )
-    
+
     recs = optimizer.generate_candidates(estimate, [o1, o2], Constraints(), workload=workload)
     assert len(recs) == 2
-    
-    # TPS for H100 should be significantly higher (~3x)
-    tps_4090 = recs[0].metrics.time_hours # Actually time, so should be lower for H100
+
+    # H100 should be faster due to higher bandwidth
+    tps_4090 = recs[0].metrics.time_hours
     tps_h100 = recs[1].metrics.time_hours
     assert tps_h100 < tps_4090

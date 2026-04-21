@@ -7,7 +7,7 @@ def test_recommend_returns_results() -> None:
         {
             "workload": {
                 "model": {
-                    "name": "llama-13b", 
+                    "name": "llama-13b",
                     "params": 13_000_000_000,
                     "hidden_dim": 5120,
                     "num_layers": 40,

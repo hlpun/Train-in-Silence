@@ -31,6 +31,7 @@ class PlannerService:
         summary = self._build_summary(labeled, market.provider_statuses)
         response = PlanningResponse(
             summary=summary,
+            estimate=estimate,
             provider_statuses=market.provider_statuses,
             recommendations=labeled,
         )
@@ -90,7 +91,7 @@ class PlannerService:
         source = "sample market data" if sample_used else "live market data"
         return (
             f"Found {len(recommendations)} viable configurations. "
-            f"Lowest cost is ${cheapest.metrics.cost_usd:.2f}; "
+            f"Lowest cost is ${cheapest.metrics.cost_usd:.4f}; "
             f"fastest estimated runtime is {fastest.metrics.time_hours:.2f} hours. "
             f"Computed from {source}."
         )

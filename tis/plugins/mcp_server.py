@@ -9,7 +9,7 @@ from tis.planner.models import Constraints, MarketOffer, PlanningRequest, Planni
 from tis.planner.recommender import PlannerService
 from tis.planner.workload import load_request
 
-APP_VERSION = "0.1.2"
+APP_VERSION = "0.1.3"
 
 
 class RequestEnvelope(BaseModel):
@@ -116,9 +116,9 @@ def create_server(service: PlannerService | None = None) -> FastMCP:
         name="train-in-silence",
         instructions=(
             "Plan hardware for LLM fine-tuning workloads. "
-            "Use validate_request before execution when the request shape is uncertain. "
-            "recommend_hardware returns ranked recommendations. "
-            "explain_plan returns resource estimates and normalized market data."
+            "recommend_hardware is the PRIMARY tool; it provides ranked options including resource estimates (VRAM, CPU). "
+            "Use explain_plan ONLY if the user explicitly asks for raw market data or deep reasoning. "
+            "explain_plan is extremely verbose, high-cost, and may require multiple read chunks."
         ),
     )
 
@@ -148,7 +148,11 @@ def create_server(service: PlannerService | None = None) -> FastMCP:
 
     @server.tool(
         name="explain_plan",
-        description="Run the full planner and return estimates, normalized market offers, provider statuses, and recommendations.",
+        description=(
+            "Run the full planner and return estimates, normalized market offers, and provider statuses. "
+            "WARNING: This tool returns raw market data and is extremely verbose (often 100k+ tokens). "
+            "Use recommend_hardware for standard recommendation tasks."
+        ),
         structured_output=True,
     )
     def explain_plan(payload: RequestEnvelope) -> PlanningRun:

@@ -23,6 +23,12 @@ To ensure accurate estimation, `ModelSpec` requires the following architecture p
 - `num_heads`: Number of query attention heads.
 - `num_kv_heads`: Number of KV attention heads (critical for GQA/MQA models).
 
+**Advanced Task Constraints (`Constraints`):**
+We use a physical overhead model to ensure realistic time and cost estimates. You can tune these parameters for your environment:
+- `network_speed_gbps`: Estimated download speed (default: 1.0).
+- `storage_speed_gbps`: Estimated disk-to-VRAM bandwidth (default: 3.0).
+- `skip_download`: Whether to skip model download time (default: true).
+
 **Request Format:**
 
 ```json
@@ -44,7 +50,7 @@ Instead of a single `workload`, you can provide a `pipeline` (a list of workload
 **Response Example:**
 ```json
 {
-  "version": "0.1.2",
+  "version": "0.1.3",
   "summary": "Found 5 viable configurations...",
   "provider_statuses": [...],
   "recommendations": [

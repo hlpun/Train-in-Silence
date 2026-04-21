@@ -19,7 +19,7 @@ def test_health_returns_status() -> None:
 def test_version_returns_valid_json() -> None:
     response = client.get("/version")
     assert response.status_code == 200
-    assert response.json()["version"] == "0.1.2"
+    assert response.json()["version"] == "0.1.3"
 
 
 @patch("tis.api.server.service.market.fetch_market_data")

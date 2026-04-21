@@ -72,7 +72,7 @@ TIS aggregates live pricing across a dozen GPU clouds. API keys are **optional**
 
 | Provider Class | Included Platforms | Auth Required |
 |----------------|--------------------|---------------|
-| **Dedicated** | Vast.ai, RunPod, AWS | **Optional** (Highly Recommended) |
+| **Dedicated** | Vast.ai, RunPod | **Optional** (Highly Recommended) |
 | **Aggregated** | Vast.ai, RunPod, AWS, CoreWeave, Lambda Labs, Tensordock, Vultr, GCP, Azure, OCI, Nebius, CloudRift, Cudo Compute, Verda | **None** (Auto-fallback) |
 
 Every recommendation clearly identifies its **Source of Truth** (e.g., `live:official`, `live:gpuhunt`, `live:gpufinder`, or `sample`) so you always know how fresh the data is. [-> Provider details](https://github.com/hlpun/Train-in-Silence/blob/main/docs/en/providers.md)

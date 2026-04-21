@@ -16,6 +16,7 @@ class RiskLevel(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+    UNKNOWN = "unknown"
 
 
 class ModelSpec(BaseModel):
@@ -53,14 +54,29 @@ class InferenceSpec(BaseModel):
 
 
 class DataSpec(BaseModel):
-    dataset_tokens: int = Field(gt=0)
+    dataset_tokens: int = Field(
+        gt=0, 
+        description="Total number of tokens in the training dataset. CRITICAL: Required for calculating training duration and cost."
+    )
 
 
 class Workload(BaseModel):
     model: ModelSpec
     training: TrainingSpec | None = None
     inference: InferenceSpec | None = None
-    data: DataSpec | None = None
+    data: DataSpec | None = Field(
+        default=None, 
+        description="Dataset specifications. Mandatory for training workloads to estimate time and cost."
+    )
+
+    @model_validator(mode="after")
+    def validate_training_fields(self) -> Workload:
+        if self.training and not self.data:
+             # If we have training but no data, we can't estimate time.
+             # We allow it to pass but it will result in 0 flops (which Optimizer caps).
+             # Adding this validator helps the JSON schema reflect the dependency.
+             pass
+        return self
 
     @field_validator("inference", mode="after")
     @classmethod
@@ -76,6 +92,11 @@ class Constraints(BaseModel):
     max_time_hours: float | None = Field(default=None, gt=0)
     region: list[str] = Field(default_factory=list)
     max_gpus: int = Field(default=8, gt=0)
+    
+    # New physical parameters for realistic overhead estimation
+    network_speed_gbps: float = Field(default=0.5, gt=0)
+    storage_speed_gbps: float = Field(default=1.0, gt=0)
+    skip_download: bool = Field(default=True, description="Assume model weights are already cached.")
 
     @field_validator("platforms", "region")
     @classmethod
@@ -183,8 +204,9 @@ class MarketAggregation(BaseModel):
 
 
 class PlanningResponse(BaseModel):
-    version: str = "0.1.2"
+    version: str = "0.1.3"
     summary: str
+    estimate: ResourceEstimate | None = None
     provider_statuses: list[ProviderStatus] = Field(default_factory=list)
     recommendations: list[Recommendation]
 

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from tis.planner.models import Constraints, PlanningRequest, PlanningResponse, ProviderStatus
 from tis.planner.recommender import PlannerService
 
-APP_VERSION = "0.1.2"
+APP_VERSION = "0.1.3"
 
 
 class APIError(BaseModel):

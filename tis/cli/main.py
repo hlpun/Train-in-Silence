@@ -38,6 +38,8 @@ def recommend(
         return
 
     typer.echo(run.response.summary)
+    if run.response.estimate:
+        _print_estimate(run.response.estimate)
     _print_provider_statuses(run.response.provider_statuses)
     if not run.response.recommendations:
         raise typer.Exit(code=1)
@@ -47,7 +49,7 @@ def recommend(
             f"[{index}] {item.label:<9} "
             f"{item.config.gpu_count}x {item.config.gpu} on {item.config.platform} "
             f"| source={item.source} "
-            f"| cost=${item.metrics.cost_usd:.2f} "
+            f"| cost=${item.metrics.cost_usd:.4f} "
             f"| time={item.metrics.time_hours:.2f}h "
             f"| availability={item.availability.score:.2f}/{item.availability.risk}"
         )
@@ -65,20 +67,15 @@ def explain(
         return
 
     typer.echo(run.response.summary)
-    typer.echo(
-        "Estimate: "
-        f"vram={run.estimate.required_vram_gb:.2f}GB "
-        f"cpu={run.estimate.required_cpu_cores} "
-        f"ram={run.estimate.required_ram_gb:.2f}GB "
-        f"flops={run.estimate.total_flops:.3e}"
-    )
+    if run.response.estimate:
+        _print_estimate(run.response.estimate)
     _print_provider_statuses(run.response.provider_statuses)
     typer.echo(f"Normalized offers considered: {len(run.market.offers)}")
     for recommendation in run.response.recommendations:
         typer.echo(f"\n- {recommendation.label.upper()}: {recommendation.config.gpu_count}x {recommendation.config.gpu}")
         typer.echo(f"  Platform: {recommendation.config.platform} ({recommendation.source})")
         typer.echo(
-            f"  Metrics: cost=${recommendation.metrics.cost_usd:.2f} "
+            f"  Metrics: cost=${recommendation.metrics.cost_usd:.4f} "
             f"| time={recommendation.metrics.time_hours:.2f}h "
             f"| util={recommendation.metrics.gpu_utilization:.0%}"
         )
@@ -131,6 +128,16 @@ def _print_provider_statuses(statuses) -> None:
             f"- {status.provider:<8} state={state:<5} source={status.source:<6} "
             f"offers={status.offers_count:<3} {message}"
         )
+
+
+def _print_estimate(estimate) -> None:
+    typer.echo(
+        "Estimate: "
+        f"vram={estimate.required_vram_gb:.2f}GB "
+        f"cpu={estimate.required_cpu_cores} "
+        f"ram={estimate.required_ram_gb:.2f}GB "
+        f"flops={estimate.total_flops:.3e}"
+    )
 
 
 def run() -> None:

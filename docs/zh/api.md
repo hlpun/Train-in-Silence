@@ -23,6 +23,12 @@ uvicorn tis.api.server:app --reload
 - `num_heads`: Query 注意力头数。
 - `num_kv_heads`: KV 注意力头数 (对于 GQA/MQA 模型至关重要)。
 
+**高级任务约束 (`Constraints`):**
+我们使用物理开销模型来确保时间与成本估算的真实性。您可以根据环境调整以下参数：
+- `network_speed_gbps`: 预估下载速度 (默认: 1.0 Gbps)。
+- `storage_speed_gbps`: 预估磁盘到显存的带宽 (默认: 3.0 GB/s)。
+- `skip_download`: 是否跳过模型下载时间计算 (默认: true)。
+
 **请求示例:**
 
 ```json
@@ -44,7 +50,7 @@ uvicorn tis.api.server:app --reload
 **响应示例：**
 ```json
 {
-  "version": "0.1.2",
+  "version": "0.1.3",
   "summary": "Found 5 viable configurations...",
   "provider_statuses": [...],
   "recommendations": [

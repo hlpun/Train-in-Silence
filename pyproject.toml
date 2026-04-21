@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "train-in-silence"
-version = "0.1.2"
+version = "0.1.3"
 description = "LLM fine-tuning hardware planner with CLI and API."
 readme = "README.md"
 authors = [{name = "hlpun", email = "hlpun@foxmail.com"}]

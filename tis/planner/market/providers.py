@@ -140,15 +140,19 @@ class VastAIProvider:
                 ram_gb = float(item.get("cpu_ram", 0)) / 1024.0
                 if total_price <= 0 or vram_gb <= 0 or cpu <= 0 or ram_gb <= 0:
                     continue
+                gpu_count = int(item.get("num_gpus") or 1)
+                # vast.ai returns total_flops as aggregate; normalize to per-GPU for consistency
+                total_flops = float(item.get("total_flops") or self.catalog.flops_for(gpu_name))
+                per_gpu_flops = total_flops / gpu_count
                 offers.append(
                     MarketOffer(
                         gpu=resolved_gpu,
-                        gpu_count=int(item.get("num_gpus") or 1),
+                        gpu_count=gpu_count,
                         vram_gb=round(vram_gb, 2),
                         price_per_hour=round(total_price, 4),
                         cpu=cpu,
                         ram_gb=round(ram_gb, 2),
-                        gpu_flops_tflops=float(item.get("total_flops") or self.catalog.flops_for(gpu_name)),
+                        gpu_flops_tflops=per_gpu_flops,
                         memory_bw_gbps=self.catalog.bandwidth_for(gpu_name),
                         platform=self.platform,
                         region=_vast_region_label(str(item.get("geolocation") or item.get("country") or "global")),
@@ -462,15 +466,24 @@ class GPUFinderProvider:
                 source_platform = str(item.get("source") or "unknown").lower()
                 gpu_name = str(item.get("name") or "unknown")
                 resolved_gpu = self.catalog.resolve_name(gpu_name)
-                
+
                 vram_gb = float(item.get("vram_mb") or 0) / 1024.0
                 ram_gb = float(item.get("ram_mb") or 0) / 1024.0
                 price = float(item.get("total_cost_ph") or 0.0)
                 gpu_count = int(item.get("num_gpus") or 1)
-                
+
                 if price <= 0 or vram_gb <= 0:
                     continue
-                
+
+                # gpufindr returns total_flops as aggregate; normalize to per-GPU for consistency
+                total_flops = float(item.get("total_flops") or self.catalog.flops_for(gpu_name))
+                per_gpu_flops = total_flops / gpu_count
+
+                # Use reliability field (0-1) to estimate availability
+                # Map to available_instances where reliability * 10 = instances count
+                reliability = float(item.get("reliability") or 0.5)
+                available_instances = max(1, int(reliability * 10))
+
                 offers.append(
                     MarketOffer(
                         gpu=resolved_gpu,
@@ -479,14 +492,14 @@ class GPUFinderProvider:
                         price_per_hour=round(price, 4),
                         cpu=int(item.get("cpu_cores") or 2),
                         ram_gb=round(ram_gb, 2),
-                        gpu_flops_tflops=float(item.get("total_flops") or self.catalog.flops_for(gpu_name)),
+                        gpu_flops_tflops=per_gpu_flops,
                         memory_bw_gbps=self.catalog.bandwidth_for(gpu_name),
                         platform=source_platform,
                         region=str(item.get("location") or "unknown").lower(),
                         source="live",
                         source_detail="live:gpufindr",
                         spot=False,
-                        available_instances=1,
+                        available_instances=available_instances,
                         instance_type=str(item.get("id") or ""),
                     )
                 )
@@ -515,21 +528,42 @@ class GPUFinderProvider:
 
 
 class GPUHuntProvider:
+    """GPUHunt provider with support for parallel querying of specific providers.
+
+    By default queries all providers, but can be configured to query specific ones
+    (e.g., just offline providers, or just vastai) for parallel execution.
+    """
     platform = "gpuhunt"
+
+    # GPUHunt provider categories
+    OFFLINE_PROVIDERS = ["aws", "azure", "verda", "gcp", "lambdalabs", "nebius", "oci", "runpod", "cloudrift"]
+    ONLINE_PROVIDERS = ["vastai", "cudo", "vultr"]  # Only include ones that work without extra API keys
 
     def __init__(
         self,
         cache: FileTTLCache | None = None,
         catalog: GPUSpecCatalog | None = None,
+        providers: list[str] | None = None,
+        name: str | None = None,
+        gpuhunt_catalog: Any | None = None,
     ) -> None:
         self.cache = cache or FileTTLCache(ttl_seconds=300)
         self.catalog = catalog or GPUSpecCatalog()
+        # If providers is None, query all; otherwise query only specified providers
+        self._providers = providers
+        self._name = name or "gpuhunt"
+        # Shared gpuhunt Catalog instance for parallel execution
+        self._gpuhunt_catalog = gpuhunt_catalog
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def fetch(self, constraints: Constraints) -> ProviderFetchResult:
         if gpuhunt is None:
             return ProviderFetchResult(
                 status=ProviderStatus(
-                    provider=self.platform,
+                    provider=self._name,
                     source="live",
                     ok=False,
                     offers_count=0,
@@ -537,7 +571,9 @@ class GPUHuntProvider:
                 )
             )
 
-        cache_key = f"gpuhunt:{','.join(sorted(constraints.platforms))}:{constraints.max_gpus}"
+        # Build cache key based on providers being queried
+        providers_key = ','.join(sorted(self._providers)) if self._providers else 'all'
+        cache_key = f"gpuhunt:{providers_key}:{constraints.max_gpus}"
         cached = self.cache.get_json(cache_key)
         if cached is not None:
             offers = [MarketOffer.model_validate(item) for item in cached]
@@ -545,7 +581,7 @@ class GPUHuntProvider:
             return ProviderFetchResult(
                 offers=offers,
                 status=ProviderStatus(
-                    provider=self.platform,
+                    provider=self._name,
                     source="live",
                     ok=True,
                     offers_count=len(offers),
@@ -554,27 +590,33 @@ class GPUHuntProvider:
             )
 
         try:
-            # We fetch all and filter locally to ensure consistency with our Constraints
-            raw_results = gpuhunt.query()
-            
+            # Query specific providers or all
+            if self._gpuhunt_catalog is not None:
+                # Use shared catalog for parallel execution (already pre-loaded)
+                raw_results = self._gpuhunt_catalog.query(provider=self._providers)
+            elif self._providers:
+                raw_results = gpuhunt.query(provider=self._providers)
+            else:
+                raw_results = gpuhunt.query()
+
             offers: list[MarketOffer] = []
             for item in raw_results:
                 # Map gpuhunt provider name to TIS platform name
                 provider_name = str(item.provider).lower()
                 if provider_name == "vastai":
                     provider_name = "vast.ai"
-                
+
                 gpu_name = str(item.gpu_name)
                 resolved_gpu = self.catalog.resolve_name(gpu_name)
-                
+
                 vram_gb = float(item.gpu_memory or 0)
                 ram_gb = float(item.memory or 0)
                 price = float(item.price or 0.0)
                 gpu_count = int(item.gpu_count or 1)
-                
+
                 if price <= 0 or vram_gb <= 0:
                     continue
-                
+
                 offers.append(
                     MarketOffer(
                         gpu=resolved_gpu,
@@ -597,22 +639,22 @@ class GPUHuntProvider:
 
             # Apply constraints and dedupe
             offers = _dedupe_offers(_apply_constraints(offers, constraints))
-            
+
             self.cache.set_json(cache_key, [item.model_dump(mode="json") for item in offers])
             return ProviderFetchResult(
                 offers=offers,
                 status=ProviderStatus(
-                    provider=self.platform,
+                    provider=self._name,
                     source="live",
                     ok=True,
                     offers_count=len(offers),
-                    message="Fetched live offers using gpuhunt library.",
+                    message=f"Fetched live offers from gpuhunt ({providers_key}).",
                 ),
             )
         except Exception as exc:
             return ProviderFetchResult(
                 status=ProviderStatus(
-                    provider=self.platform,
+                    provider=self._name,
                     source="live",
                     ok=False,
                     offers_count=0,

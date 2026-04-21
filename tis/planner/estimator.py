@@ -26,8 +26,8 @@ TRAINING_OVERHEAD_FACTOR = {
 
 TRAINING_FLOPS_FACTOR = {
     "full": 1.0,
-    "lora": 0.3,
-    "qlora": 0.18,
+    "lora": 0.67,
+    "qlora": 0.65,
 }
 
 
@@ -139,7 +139,10 @@ class ResourceEstimator:
         
 
         total_tokens = (workload.data.dataset_tokens if workload.data else 0) * training.epochs
-        total_flops = float(6 * model.params * total_tokens * TRAINING_FLOPS_FACTOR[training.method])
+        
+        # Calculation for MoE: only active experts contribute to FLOPs
+        active_params = (model.active_experts / model.num_experts * model.params) if model.num_experts > 0 else model.params
+        total_flops = float(6 * active_params * total_tokens * TRAINING_FLOPS_FACTOR[training.method])
 
         return ResourceEstimate(
             required_vram_gb=required_vram_gb,
