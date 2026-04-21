@@ -38,9 +38,22 @@ class ResourceEstimator:
         if isinstance(workload, list):
             return self._estimate_pipeline(workload)
         
-        if workload.inference:
-            return self._estimate_inference(workload)
-        return self._estimate_training(workload)
+        if workload.training and workload.inference:
+            est_t = self._estimate_training(workload)
+            est_i = self._estimate_inference(workload)
+            return ResourceEstimate(
+                required_vram_gb=max(est_t.required_vram_gb, est_i.required_vram_gb),
+                required_cpu_cores=max(est_t.required_cpu_cores, est_i.required_cpu_cores),
+                required_ram_gb=max(est_t.required_ram_gb, est_i.required_ram_gb),
+                total_flops=est_t.total_flops + est_i.total_flops,
+                throughput_tokens_per_second=0.0,
+                kv_cache_gb=est_i.kv_cache_gb,
+                stage_details=[est_t, est_i]
+            )
+
+        if workload.training:
+            return self._estimate_training(workload)
+        return self._estimate_inference(workload)
 
     def _estimate_pipeline(self, pipeline: list[Workload]) -> ResourceEstimate:
         """Aggregates multiple workload stages sequentially."""
@@ -99,7 +112,7 @@ class ResourceEstimator:
         # Decoding: 2 * active_params * max_new_tokens
         flops_prefill = 2 * model.params * inference.prompt_tokens
         flops_decoding = 2 * active_params * (inference.context_length - inference.prompt_tokens if inference.context_length else inference.max_new_tokens)
-        total_flops = float((flops_prefill + flops_decoding) * inference.batch_size)
+        total_flops = float((flops_prefill + flops_decoding) * inference.batch_size * workload.repeats)
 
         return ResourceEstimate(
             required_vram_gb=required_vram_gb,
@@ -142,7 +155,7 @@ class ResourceEstimator:
         
         # Calculation for MoE: only active experts contribute to FLOPs
         active_params = (model.active_experts / model.num_experts * model.params) if model.num_experts > 0 else model.params
-        total_flops = float(6 * active_params * total_tokens * TRAINING_FLOPS_FACTOR[training.method])
+        total_flops = float(6 * active_params * total_tokens * TRAINING_FLOPS_FACTOR[training.method] * workload.repeats)
 
         return ResourceEstimate(
             required_vram_gb=required_vram_gb,

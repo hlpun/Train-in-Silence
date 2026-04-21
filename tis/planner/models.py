@@ -33,20 +33,20 @@ class ModelSpec(BaseModel):
 
 
 class TrainingSpec(BaseModel):
-    method: Literal["full", "lora", "qlora"] = "qlora"
-    precision: Literal["fp32", "fp16", "bf16", "int8", "int4"] = "bf16"
-    batch_size: int = Field(default=1, gt=0)
-    grad_accum: int = Field(default=1, gt=0)
-    seq_len: int = Field(default=2048, gt=0)
-    epochs: float = Field(default=1.0, gt=0)
-    num_workers: int = Field(default=4, ge=0)
+    method: Literal["full", "lora", "qlora"] = Field(default="qlora", description="Fine-tuning method. 'qlora' (4-bit) is most efficient, 'lora' is 16-bit, 'full' is all parameters.")
+    precision: Literal["fp32", "fp16", "bf16", "int8", "int4"] = Field(default="bf16", description="Compute precision for the training pass.")
+    batch_size: int = Field(default=1, gt=0, description="Micro-batch size per GPU.")
+    grad_accum: int = Field(default=1, gt=0, description="Number of gradient accumulation steps.")
+    seq_len: int = Field(default=2048, gt=0, description="Sequence length for context handling.")
+    epochs: float = Field(default=1.0, gt=0, description="Number of training epochs (can be fractional).")
+    num_workers: int = Field(default=4, ge=0, description="Number of data loader workers.")
 
 
 class InferenceSpec(BaseModel):
-    precision: Literal["fp32", "fp16", "bf16", "int8", "int4"] = "bf16"
-    batch_size: int = Field(default=1, gt=0)
-    prompt_tokens: int = Field(default=512, gt=0)
-    max_new_tokens: int = Field(default=1024, gt=0)
+    precision: Literal["fp32", "fp16", "bf16", "int8", "int4"] = Field(default="bf16", description="Inference precision (e.g., 'int4' for heavy quantization).")
+    batch_size: int = Field(default=1, gt=0, description="Number of concurrent requests/prompts.")
+    prompt_tokens: int = Field(default=512, gt=0, description="Expected average tokens per prompt.")
+    max_new_tokens: int = Field(default=1024, gt=0, description="Maximum number of tokens to generate per request.")
     context_length: int | None = Field(
         default=None, 
         description="Target sequence length for KV cache planning. Defaults to prompt + max_new."
@@ -64,6 +64,11 @@ class Workload(BaseModel):
     model: ModelSpec
     training: TrainingSpec | None = None
     inference: InferenceSpec | None = None
+    repeats: int = Field(
+        default=1, 
+        gt=0, 
+        description="Number of times to sequentially repeat this workload (e.g., for multiple runs or different seeds)."
+    )
     data: DataSpec | None = Field(
         default=None, 
         description="Dataset specifications. Mandatory for training workloads to estimate time and cost."
@@ -87,15 +92,15 @@ class Workload(BaseModel):
 
 
 class Constraints(BaseModel):
-    platforms: list[str] = Field(default_factory=lambda: ["vast.ai", "runpod", "aws"])
-    max_budget: float | None = Field(default=None, gt=0)
-    max_time_hours: float | None = Field(default=None, gt=0)
-    region: list[str] = Field(default_factory=list)
-    max_gpus: int = Field(default=8, gt=0)
+    platforms: list[str] = Field(default_factory=lambda: ["vast.ai", "runpod", "aws"], description="Target cloud platforms for the search (e.g., ['aws', 'runpod']).")
+    max_budget: float | None = Field(default=None, gt=0, description="Maximum allowed total cost in USD.")
+    max_time_hours: float | None = Field(default=None, gt=0, description="Deadline or maximum allowed time in hours.")
+    region: list[str] = Field(default_factory=list, description="Preferred geographical regions (e.g., ['us-east', 'eu-west']).")
+    max_gpus: int = Field(default=8, gt=0, description="Upper limit on GPUs per node or cluster.")
     
     # New physical parameters for realistic overhead estimation
-    network_speed_gbps: float = Field(default=0.5, gt=0)
-    storage_speed_gbps: float = Field(default=1.0, gt=0)
+    network_speed_gbps: float = Field(default=0.5, gt=0, description="Est. interconnect/download speed in Gbps. Affects model download time.")
+    storage_speed_gbps: float = Field(default=1.0, gt=0, description="Est. local disk IO speed in GB/s. Affects model loading/saving time.")
     skip_download: bool = Field(default=True, description="Assume model weights are already cached.")
 
     @field_validator("platforms", "region")
@@ -105,12 +110,12 @@ class Constraints(BaseModel):
 
 
 class Preference(BaseModel):
-    optimize_for: OptimizeFor = OptimizeFor.BALANCED
+    optimize_for: OptimizeFor = Field(default=OptimizeFor.BALANCED, description="Strategy to rank candidates. 'min_cost', 'min_time', or 'balanced'.")
 
 
 class PlanningRequest(BaseModel):
-    workload: Workload | None = None
-    pipeline: list[Workload] | None = None
+    workload: Workload | None = Field(default=None, description="A single training or inference workload task.")
+    pipeline: list[Workload] | None = Field(default=None, description="A multi-stage task list (e.g., train then evaluate). Stages are executed sequentially and their duration/cost are additive.")
     constraints: Constraints = Field(default_factory=Constraints)
     preference: Preference = Field(default_factory=Preference)
 
@@ -204,7 +209,7 @@ class MarketAggregation(BaseModel):
 
 
 class PlanningResponse(BaseModel):
-    version: str = "0.1.3"
+    version: str = "0.1.5"
     summary: str
     estimate: ResourceEstimate | None = None
     provider_statuses: list[ProviderStatus] = Field(default_factory=list)

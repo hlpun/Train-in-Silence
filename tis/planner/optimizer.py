@@ -118,12 +118,32 @@ class OptimizerEngine:
              download_hours = weights_gb / (constraints.network_speed_gbps / 8.0 * 3600.0)
         
         # C. Preprocessing (CPU bound)
-        tokens = (workload.data.dataset_tokens if workload.data else 0)
+        tokens = 0
+        if workload.training:
+            tokens += (workload.data.dataset_tokens if workload.data else 0) * workload.training.epochs
         if workload.inference:
-             tokens = (workload.inference.prompt_tokens + workload.inference.max_new_tokens) * workload.inference.batch_size
+            # For inference, tokens = total tokens in the prompt + generated
+            tokens += (workload.inference.prompt_tokens + workload.inference.max_new_tokens) * workload.inference.batch_size
+        
+        tokens *= workload.repeats
         preprocess_hours = tokens / (OptimizerEngine.PREPROCESSING_TPS * 3600.0)
 
         # 2. Compute Calculation
+        compute_hours = 0.0
+        
+        # A. Training Compute
+        if workload.training:
+            # Use training-only flops from stage_details if available, else use total_flops
+            training_flops = estimate.total_flops
+            if estimate.stage_details and len(estimate.stage_details) > 0:
+                # In mixed mode, training is index 0
+                training_flops = estimate.stage_details[0].total_flops
+            
+            efficiency = 0.45 if offer.gpu_count == 1 else 0.35
+            seconds = training_flops / max(effective_tflops * efficiency, 1.0)
+            compute_hours += seconds / 3600.0
+
+        # B. Inference Compute
         if workload.inference:
             inf = workload.inference
             model = workload.model
@@ -148,19 +168,13 @@ class OptimizerEngine:
             decoding_tps = min(decoding_tps_bandwidth, decoding_tps_compute)
             decoding_seconds = inf.max_new_tokens / max(decoding_tps, 1e-6)
             
-            total_seconds = prefill_seconds + decoding_seconds
-            compute_hours = total_seconds / 3600.0
-            
-            total_hours = compute_hours + io_hours + download_hours + preprocess_hours
-            return max(total_hours, OptimizerEngine.MIN_INFERENCE_TIME_HOURS)
+            inf_seconds = (prefill_seconds + decoding_seconds) * workload.repeats
+            compute_hours += inf_seconds / 3600.0
 
-        # Branch 2: Training Logic
-        efficiency = 0.45 if offer.gpu_count == 1 else 0.35
-        seconds = estimate.total_flops / max(effective_tflops * efficiency, 1.0)
-        compute_hours = seconds / 3600.0
-        
         total_hours = compute_hours + io_hours + download_hours + preprocess_hours
-        return max(total_hours, OptimizerEngine.MIN_TRAINING_TIME_HOURS)
+        floor = OptimizerEngine.MIN_INFERENCE_TIME_HOURS if not workload.training else OptimizerEngine.MIN_TRAINING_TIME_HOURS
+        return max(total_hours, floor)
+
 
     @staticmethod
     def _estimate_time_hours(
@@ -169,6 +183,7 @@ class OptimizerEngine:
         constraints: Constraints,
         workload: Workload | list[Workload] | None = None
     ) -> float:
+        # print(f"DEBUG: workload type={type(workload)} flops={estimate.total_flops}")
         # One-time Boot Tax (Setup)
         boot_tax = OptimizerEngine.PLATFORM_BOOT_TAX_HOURS.get(
             offer.platform, OptimizerEngine.PLATFORM_BOOT_TAX_HOURS["default"]

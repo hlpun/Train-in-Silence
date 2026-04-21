@@ -9,7 +9,7 @@ from tis.planner.models import Constraints, MarketOffer, PlanningRequest, Planni
 from tis.planner.recommender import PlannerService
 from tis.planner.workload import load_request
 
-APP_VERSION = "0.1.3"
+APP_VERSION = "0.1.5"
 
 
 class RequestEnvelope(BaseModel):
@@ -67,11 +67,18 @@ class TISPlannerPlugin:
 
     def validate(self, payload: RequestEnvelope) -> ValidationResult:
         request = self._resolve_request(payload)
+        if request.pipeline:
+            stages = [
+                f"{w.model.name} ({'inference' if w.inference else 'training'})" 
+                for w in request.pipeline
+            ]
+            summary = f"Pipeline Stage(s): {' -> '.join(stages)}"
+        else:
+            summary = f"Model={request.workload.model.name} | optimize_for={request.preference.optimize_for}"
+
         return ValidationResult(
             summary=(
-                f"Model={request.workload.model.name} | "
-                f"optimize_for={request.preference.optimize_for} | "
-                f"platforms={','.join(request.constraints.platforms)}"
+                f"{summary} | platforms={','.join(request.constraints.platforms)}"
             ),
             request=request,
         )
@@ -115,10 +122,12 @@ def create_server(service: PlannerService | None = None) -> FastMCP:
     server = FastMCP(
         name="train-in-silence",
         instructions=(
-            "Plan hardware for LLM fine-tuning workloads. "
-            "recommend_hardware is the PRIMARY tool; it provides ranked options including resource estimates (VRAM, CPU). "
-            "Use explain_plan ONLY if the user explicitly asks for raw market data or deep reasoning. "
-            "explain_plan is extremely verbose, high-cost, and may require multiple read chunks."
+            "Plan hardware for LLM fine-tuning and inference workloads. "
+            "recommend_hardware is the PRIMARY tool. "
+            "For multi-stage workloads (e.g., training followed by evaluation), MUST use the 'pipeline' field "
+            "instead of 'workload'. Pipeline stages are executed sequentially and their duration/cost are additive. "
+            "The 'repeats' field within a workload specifies how many times that specific stage should be sequentially repeated (e.g., for multiple seeds). "
+            "Use explain_plan ONLY if deep reasoning or raw market data is required; it is extremely verbose, high-cost, and may require multiple read chunks."
         ),
     )
 

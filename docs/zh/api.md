@@ -50,7 +50,7 @@ uvicorn tis.api.server:app --reload
 **响应示例：**
 ```json
 {
-  "version": "0.1.3",
+  "version": "0.1.5",
   "summary": "Found 5 viable configurations...",
   "provider_statuses": [...],
   "recommendations": [

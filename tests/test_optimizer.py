@@ -125,3 +125,44 @@ def test_optimizer_inference_tps_logic(optimizer: OptimizerEngine, llama3_model)
     tps_4090 = recs[0].metrics.time_hours
     tps_h100 = recs[1].metrics.time_hours
     assert tps_h100 < tps_4090
+
+
+def test_optimizer_repeats_scaling(optimizer: OptimizerEngine) -> None:
+    from tis.planner.models import ModelSpec, InferenceSpec, TrainingSpec, DataSpec
+    
+    model = ModelSpec(name="tiny", params=10_000_000, num_layers=4, num_heads=4, num_kv_heads=4, hidden_dim=256)
+    offer = MarketOffer(
+        gpu="RTX 4090", gpu_count=1, vram_gb=24.0, price_per_hour=0.5,
+        cpu=8, ram_gb=32.0, gpu_flops_tflops=82.6, memory_bw_gbps=1008.0,
+        platform="runpod", region="us-east"
+    )
+    constraints = Constraints(platforms=["runpod"])
+    
+    # 1. Inference Repeats
+    w_inf_1 = Workload(model=model, inference=InferenceSpec(), repeats=1)
+    w_inf_10 = Workload(model=model, inference=InferenceSpec(), repeats=10)
+    
+    from tis.planner.estimator import ResourceEstimator
+    estimator = ResourceEstimator()
+    
+    est_inf_1 = estimator.estimate(w_inf_1)
+    est_inf_10 = estimator.estimate(w_inf_10)
+    
+    time_inf_1 = optimizer._estimate_time_hours(est_inf_1, offer, constraints, w_inf_1)
+    time_inf_10 = optimizer._estimate_time_hours(est_inf_10, offer, constraints, w_inf_10)
+    
+    # Must be strictly greater. Boot tax is constant (0.033).
+    assert time_inf_10 > time_inf_1
+    
+    # 2. Training Repeats
+    data = DataSpec(dataset_tokens=100_000)
+    w_train_1 = Workload(model=model, training=TrainingSpec(epochs=1), data=data, repeats=1)
+    w_train_10 = Workload(model=model, training=TrainingSpec(epochs=1), data=data, repeats=10)
+    
+    est_train_1 = estimator.estimate(w_train_1)
+    est_train_10 = estimator.estimate(w_train_10)
+    
+    time_train_1 = optimizer._estimate_time_hours(est_train_1, offer, constraints, w_train_1)
+    time_train_10 = optimizer._estimate_time_hours(est_train_10, offer, constraints, w_train_10)
+    
+    assert time_train_10 > time_train_1
