@@ -209,7 +209,7 @@ class MarketAggregation(BaseModel):
 
 
 class PlanningResponse(BaseModel):
-    version: str = "0.1.5"
+    version: str = "0.1.6"
     summary: str
     estimate: ResourceEstimate | None = None
     provider_statuses: list[ProviderStatus] = Field(default_factory=list)

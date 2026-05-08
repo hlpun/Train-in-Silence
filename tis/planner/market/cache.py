@@ -7,9 +7,11 @@ from pathlib import Path
 
 
 class FileTTLCache:
-    def __init__(self, cache_dir: str | Path = ".tis_cache", ttl_seconds: int = 300) -> None:
-        self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, cache_dir: str | Path | None = None, ttl_seconds: int = 300) -> None:
+        if cache_dir is None:
+            self.cache_dir = Path.home() / ".tis" / "cache"
+        else:
+            self.cache_dir = Path(cache_dir)
         self.ttl_seconds = ttl_seconds
 
     def get_json(self, key: str) -> object | None:
@@ -25,6 +27,7 @@ class FileTTLCache:
 
     def set_json(self, key: str, value: object) -> None:
         path = self._path_for_key(key)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         payload = {
             "expires_at": time.time() + self.ttl_seconds,
             "value": value,
